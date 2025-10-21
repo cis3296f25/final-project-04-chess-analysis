@@ -25,7 +25,8 @@ SECRET_KEY = 'django-insecure-(p6lj2c!n*c56hj1ewc!bk6gqprd=q$v5yb%l+96um7^+ofo1p
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost',
+                 '127.0.0.1']
 
 
 # Application definition
@@ -37,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'ChessAnalyzer',
 ]
 
 MIDDLEWARE = [
