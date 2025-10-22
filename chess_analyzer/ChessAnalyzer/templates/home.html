@@ -5,7 +5,7 @@
 <div class="demoHead">   
     <div>
       <div style="float:left;">
-        <h1>Image Processing App</h1>
+        <h1>Analyze your chess game</h1>
       </div>
       <div style="clear:both;"></div>
     </div>
@@ -37,8 +37,8 @@
           -->
           <!-- Step 1 -->
           <div id="step-1">	
-            <h2 class="StepTitle">Select image file</h2>
-            <h4>Choose the image file:</h4>
+            <h2 class="StepTitle">Select PGN file</h2>
+            <h4>Choose the PGN file:</h4>
             <p>{{ form.non_field_errors }}</p>
             <p>
               {{ form.myfilefield.errors }}
@@ -76,7 +76,7 @@
 
           <!-- Step 3 -->
           <div id="step-3">
-            <h2 class="StepTitle">Apply Filter</h2><br>
+            <h2 class="StepTitle">Analyze</h2><br>
             <h4>Click finish to apply filter to image.</h4><br>
             <input type="submit" value="Finish" class="btn btn-primary">
           </div>
