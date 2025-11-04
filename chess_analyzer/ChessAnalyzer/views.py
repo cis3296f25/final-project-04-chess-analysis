@@ -3,8 +3,8 @@ from django.core.files.storage import FileSystemStorage
 
 # Create your views here.
 def home(request):
-    if request.method == 'POST' and request.FILES.get('uploaded_file'):
-        uploaded_file = request.FILES['uploaded_file']
+    if request.method == 'POST' and request.FILES.get('pgn_file'):
+        uploaded_file = request.FILES['pgn_file']
 
         # Save to /media/
         fs = FileSystemStorage()

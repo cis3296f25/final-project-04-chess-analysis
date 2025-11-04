@@ -22,16 +22,18 @@
             <a class="nav-link" href="{% url 'home' %}">Home</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#">About</a>
+            <a class="nav-link" href="#">Login</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#">Contact</a>
+            <a class="nav-link" href="#">About</a>
           </li>
         </ul>
       </div>
     </nav>
     <!-- Main Content -->
     <div class="container mb-6">{% block content %} {% endblock %}</div>
+    <!-- Footer -->
+    <footer class="bg-dark text-white text-center py-3 mt-auto">Chess Analysis API</footer>
     <!-- Bootstrap JS & JQuery dependencies -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js" ></script>
