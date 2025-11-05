@@ -10,6 +10,8 @@
 Go to https://stockfishchess.org/download/
 Download the version for your operating system
 Extract the archive
+update the path in line 43 of views/py file   " stockfish_path = r"C:\Users\legog\chess-analyzer\stockfish\stockfish-windows-x86-64-avx2.exe" " with your own path
+
 
 - Click run button
 
