@@ -1,5 +1,8 @@
 from django.shortcuts import render
 from django.core.files.storage import FileSystemStorage
+import chess
+import chess.pgn
+import chess.engine
 
 # Create your views here.
 def home(request):
@@ -18,8 +21,68 @@ def home(request):
         # You can open/read it here if you want:
         with open(file_path, 'r') as f:
             content = f.read()
-            ######STOCKFUSH ANALYSIS LOGIC HERE########
+            analysis = analyze_game_stockfish(content)
+        
+        # Print analysis to console
+        if analysis:
+            print("\n" + "="*50)
+            print("CHESS GAME ANALYSIS")
+            print("="*50)
+            for i, move_data in enumerate(analysis, 1):
+                print(f"Move {i}: {move_data['move']}")
+                print(f"  Evaluation: {move_data['evaluation']:.2f}")
+                print("-"*50)
+            print("="*50 + "\n")
 
-
-        return render(request, 'home.html', {'file_url': file_url})
+        return render(request, 'home.html', {'analysis': analysis})
     return render(request, 'home.html')
+
+def analyze_game_stockfish(pgn_text):
+    print("Starting Stockfish analysis...")
+    #update with your own path
+    stockfish_path = r"C:\Users\legog\chess-analyzer\stockfish\stockfish-windows-x86-64-avx2.exe"
+    
+    # parse pgn
+    from io import StringIO
+    pgn = StringIO(pgn_text)
+    game = chess.pgn.read_game(pgn)
+    
+    if not game:
+        print("ERROR: Could not parse PGN!")
+        return []
+    
+    print("PGN parsed successfully!")
+    
+    #initialize stockfish
+    try:
+        engine = chess.engine.SimpleEngine.popen_uci(stockfish_path)
+    except FileNotFoundError:
+        print(f"ERROR: Stockfish not found at {stockfish_path}")
+        return []
+    
+    analysis = []
+    board = game.board()
+    move_count = 0
+    
+    for move in game.mainline_moves():
+        move_count += 1
+       #  print(f"Analyzing move {move_count}...")
+        
+        #Analyze position (0.1 seconds per move)
+        info = engine.analyse(board, chess.engine.Limit(time=0.1))
+        score = info['score'].relative.score(mate_score=10000)
+        
+        # Convert centipawns to pawns
+        evaluation = score / 100 if score else 0
+        
+        analysis.append({
+            'move': board.san(move),
+            'evaluation': evaluation
+        })
+        
+        board.push(move)
+    
+    engine.quit()
+    print(f"Analysis complete! Analyzed {len(analysis)} moves")
+    
+    return analysis
