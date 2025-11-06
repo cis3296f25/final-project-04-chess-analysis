@@ -6,6 +6,8 @@
 # How to run
 - Download python 3.4
 - Download python-chess library (type pip install chess into terminal)
+- Download django (pip install django)
+
 - Download stockfish:
 Go to https://stockfishchess.org/download/
 Download the version for your operating system
