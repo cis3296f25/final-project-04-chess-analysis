@@ -16,7 +16,7 @@ edit line 43 in views.py    stockfish_path = r"C:\Users\legog\chess-analyzer\sto
 
 
 
-- Click run button
+- type python manage.py runserver
 
 # How to contribute
 Follow this project board to know the latest status of the project: [http://...]([http://...])  
