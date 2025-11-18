@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %} Upload Game {% endblock %}
+{% block content %}
+    {% load static %}
+    <div class="titleHeader" style="text-align: left; padding-left: 10px;">
+        <h1>Chess Analysis API</h1>
+    </div>
+
+    <div class="container-md pt-3">
+        <p>
+            <img class="mx-auto d-block img-fluid img-thumbnail" src="{% static 'pics/chess_board-1.png' %}">
+        </p>
+    </div>
+    <!-- File Upload form -->
+    <form method="POST" action="{% url 'upload' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <br/>
+        <div class="form-group container-fluid pt-3 justify-content-center row">
+            <div class="col-auto">
+                <h3>Upload a PGN File to Analyze a Chess Match</h3>
+                <div class="custom-file">
+                    <input type="file" class="custom-file-input" id="id_pgn_file" name="pgn_file" accept=".pgn" required>
+                    <label class="custom-file-label" for="id_pgn_file">Choose PGN file</label>
+                    <br/>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+            </div>
+        </div>
+    </form>
+    <div>
+
+    </div>
+    <script>
+        // JavaScript to update the file input label on change
+        "use strict"; // No globally declared variables allowed
+
+        // Get the file input element
+        var fileInput = document.getElementById("id_pgn_file");
+        // Add an event listener to the file input element
+        fileInput.addEventListener("change", function (event) {
+            // Get the file name from the file input element
+            const fileName = event.target.files[0].name ?
+                event.target.files[0].name : "Choose a PGN file";
+            // Get the label and assign text to file name
+            const label = event.target.nextElementSibling; // Get the label element
+            label.textContent = fileName; // Set the label text to file name
+        });
+    </script>
+{% endblock %}

@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -10,9 +11,10 @@
     </title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"  rel="stylesheet" />
   </head>
-  <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <a class="navbar-brand" href="#">My Django App</a>
+  <body class="d-flex flex-column min-vh-100">
+  <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <a class="navbar-brand" href="{% url 'home' %}">Chess Analysis</a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav">
@@ -20,15 +22,25 @@
             <a class="nav-link" href="{% url 'home' %}">Home</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#">About</a>
+            <a class="nav-link" href="#">Login</a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#">Contact</a>
+          <li class="nav-item active">
+            <a class="nav-link" href="{% url 'about' %}">About</a>
           </li>
         </ul>
       </div>
     </nav>
-    <div class="container">{% block content %} {% endblock %}</div>
+    <!-- Main Content -->
+    <main class="flex-fill mb-3" style="padding-bottom: 2rem">
+        {% block content %} {% endblock %}
+    </main>
+    <!-- Footer -->
+    <footer class="fixed-bottom py-1 mt-auto bg-dark text-white text-center">
+        <div class="container text-center">
+            <span>Chess Analysis API</span>
+        </div>
+    </footer>
+    <!-- Bootstrap JS & JQuery dependencies -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js" ></script>
   </body>

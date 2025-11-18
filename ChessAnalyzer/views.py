@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .chess_com_functions import lookup_elo, lookup_games
+from ..chess_com_functions import lookup_elo, lookup_games
 
 # Create your views here.
 def home(request):
