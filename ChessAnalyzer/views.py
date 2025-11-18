@@ -1,4 +1,5 @@
-from django.shortcuts import render
+from django.core.paginator import Paginator
+from django.shortcuts import render, redirect
 from django.core.files.storage import FileSystemStorage
 from .utils import get_stockfish_path
 import chess
@@ -7,36 +8,11 @@ import chess.engine
 
 # Create your views here.
 def home(request):
-    if request.method == 'POST' and request.FILES.get('pgn_file'):
-        uploaded_file = request.FILES['pgn_file']
-
-        # Save to /media/
-        fs = FileSystemStorage()
-        filename = fs.save(uploaded_file.name, uploaded_file)
-        file_url = fs.url(filename)
-
-        # (Optional) Access the file path on backend:
-        file_path = fs.path(filename)
-        print(f"Saved at: {file_path}")
-
-        # You can open/read it here if you want:
-        with open(file_path, 'r') as f:
-            content = f.read()
-            analysis = analyze_game_stockfish(content)
-        
-        # Print analysis to console
-        if analysis:
-            print("\n" + "="*50)
-            print("CHESS GAME ANALYSIS")
-            print("="*50)
-            for i, move_data in enumerate(analysis, 1):
-                print(f"Move {i}: {move_data['move']}")
-                print(f"  Evaluation: {move_data['evaluation']:.2f}")
-                print("-"*50)
-            print("="*50 + "\n")
-
-        return render(request, 'home.html', {'analysis': analysis})
+    # TODO: Move logic to upload.html view
     return render(request, 'home.html')
+
+def about(request):
+    return render(request, 'about.html')
 
 def analyze_game_stockfish(pgn_text):
     print("Starting Stockfish analysis...")
@@ -87,3 +63,54 @@ def analyze_game_stockfish(pgn_text):
     print(f"Analysis complete! Analyzed {len(analysis)} moves")
     
     return analysis
+
+
+def upload(request):
+    if request.method == 'POST' and request.FILES.get('pgn_file'):
+        uploaded_file = request.FILES['pgn_file']
+
+        # Save to /media/
+        fs = FileSystemStorage()
+        filename = fs.save(uploaded_file.name, uploaded_file)
+        file_url = fs.url(filename)
+
+        # (Optional) Access the file path on backend:
+        file_path = fs.path(filename)
+        print(f"Saved at: {file_path}")
+
+        # You can open/read it here if you want:
+        with open(file_path, 'r') as f:
+            content = f.read()
+            analysis = analyze_game_stockfish(content)
+        request.session["display"] = analysis
+        analysis_print = analysis
+
+        # Print analysis to console
+        if analysis_print:
+            print("\n" + "=" * 50)
+            print("CHESS GAME ANALYSIS")
+            print("=" * 50)
+            for i, move_data in enumerate(analysis_print, 1):
+                print(f"Move {i}: {move_data['move']}")
+                print(f"  Evaluation: {move_data['evaluation']:.2f}")
+                print("-" * 50)
+            print("=" * 50 + "\n")
+
+        request.session.modified = True
+        print("Analysis saved to session: ", request.session.get("display"))
+        return redirect("display")
+    return render(request, 'upload.html')
+
+def display(request):
+    # TODO: Implement more robust analysis view (especially for graphs)
+    analysis_result = request.session.get("display")
+    if analysis_result is None:
+        print("No analysis found in session. Redirecting to upload page.")
+        return redirect("upload")
+    else:
+        print("Analysis found in session: ", analysis_result)
+
+    paginator = Paginator(analysis_result, 10)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+    return render(request, "display.html", {"page_obj": page_obj})
