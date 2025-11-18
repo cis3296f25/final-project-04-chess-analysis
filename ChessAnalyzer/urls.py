@@ -4,7 +4,10 @@ from . import views
 
 # app urls
 urlpatterns = [
-    path('', views.home, name='home')
+    path('', views.home, name='home'),
+    path('about/', views.about, name='about'),
+    path('upload/', views.upload, name='upload'),
+    path('display/', views.display, name='display'),
 ]
 
 if settings.DEBUG:

@@ -3,7 +3,7 @@
 {% block content %}
     {% load static %}
     <div class="titleHeader" style="text-align: left; padding-left: 10px;">
-        <h1>Chess Analysis API</h1>
+        <h1>About</h1>
     </div>
 
     <div class="container-md pt-3">
@@ -11,9 +11,15 @@
             <img class="mx-auto d-block img-fluid img-thumbnail" src="{% static 'pics/chess_board-1.png' %}">
         </p>
     </div>
-    <div class="container-fluid text-center">
-        <h2>Welcome to the Chess Analysis Tool! To begin, click the button below to upload a file:</h2>
-        <a href="{% url 'upload' %}" class="btn btn-primary">Upload a PGN File</a>
+        <article>
+        <p>
+            This is a simple Django app that uses Python Chess and Stockfish
+            to analyze chess matches. The app allows users to upload a PGN file
+            containing chess match data and receive an analysis of the match results.
+        </p>
+        </article>
+    <div>
+
     </div>
     <script>
     </script>
