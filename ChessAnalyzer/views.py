@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.core.files.storage import FileSystemStorage
+from .utils import get_stockfish_path
 import chess
 import chess.pgn
 import chess.engine
@@ -39,8 +40,8 @@ def home(request):
 
 def analyze_game_stockfish(pgn_text):
     print("Starting Stockfish analysis...")
-    #update with your own path
-    stockfish_path = r"C:\Users\legog\chess-analyzer\stockfish\stockfish-windows-x86-64-avx2.exe"
+    # Automatically detect and get stockfish path
+    stockfish_path = get_stockfish_path()
     
     # parse pgn
     from io import StringIO

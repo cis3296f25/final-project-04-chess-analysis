@@ -22,9 +22,11 @@ edit line 43 in views.py    stockfish_path = r"C:\Users\legog\chess-analyzer\sto
 Follow this project board to know the latest status of the project: [http://...]([http://...])  
 
 ### How to build
-- Use this github repository: ... 
-- Specify what branch to use for a more stable release or for cutting edge development.  
-- Use InteliJ 11
-- Specify additional library to download if needed 
-- What file and target to compile and run. 
-- What is expected to happen when the app start. 
+- Download this repo
+- Open terminal and cd to root directory
+- Run command: python -m venv .venv
+- Run command Linux/MacOS: source .venv/bin/activate
+- Run command Windows: .venv\Scripts\activate
+- Run command: pip install -r requirements.txt
+- Install stockfish engine and add its folder path to system environment variable
+- Rename the executable or binary to "stockfish" (with application file extension)
