@@ -86,4 +86,30 @@
   </table>
 </form>
 
+<p></p>
+
+<div style="border: 2px dashed lightgray; padding: 1em; margin-bottom: 2em;">
+  <h2>Username Test</h2>
+  <form method="post" action="">
+    {% csrf_token %}
+    <input type="text" name="username" placeholder="Enter your username">
+    <input type="submit" value="Submit">
+  </form>
+
+  {% if username %}
+    <p>You entered: <strong>{{ username }}</strong></p>
+
+    {% if elos %}
+      <h4>Chess.com Ratings</h4>
+      <ul>
+        <li><strong>Rapid:</strong> {{ elos.rapid|default:"N/A" }}</li>
+        <li><strong>Blitz:</strong> {{ elos.blitz|default:"N/A" }}</li>
+        <li><strong>Bullet:</strong> {{ elos.bullet|default:"N/A" }}</li>
+      </ul>
+    {% elif error %}
+      <p style="color: red;">{{ error }}</p>
+    {% endif %}
+  {% endif %}
+</div>
+
 {% endblock %}
