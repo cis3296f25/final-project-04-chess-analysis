@@ -54,7 +54,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'chess_analyzer.urls'
+ROOT_URLCONF = 'Chess_analyzer.urls'
 
 TEMPLATES = [
     {
