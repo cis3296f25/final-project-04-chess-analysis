@@ -1,10 +1,15 @@
 from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
 from django.core.files.storage import FileSystemStorage
+from django.conf import settings
 from .utils import get_stockfish_path
 import chess
 import chess.pgn
 import chess.engine
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import os
 
 # Create your views here.
 def home(request):
@@ -114,3 +119,33 @@ def display(request):
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
     return render(request, "display.html", {"page_obj": page_obj})
+
+def advantage_graph(request):
+    # Get analysis from session (same data used in display())
+    analysis_result = request.session.get("display")
+
+    # X-axis: move numbers 1..N
+    moves = list(range(1, len(analysis_result) + 1))
+    # Y-axis: evaluation values in pawns
+    evaluations = [item["evaluation"] for item in analysis_result]
+
+    # Create the plot
+    plt.figure(figsize=(10, 4))
+    plt.plot(moves, evaluations)
+    plt.axhline(0, linestyle='--', linewidth=1)  # zero line at 0
+    plt.xlabel("Move number")
+    plt.ylabel("Evaluation (pawns, + = White, - = Black)")
+    plt.title("Advantage Over Time")
+    plt.tight_layout()
+
+    # Save the plot into MEDIA_ROOT
+    os.makedirs(settings.MEDIA_ROOT, exist_ok=True)  # ensure folder exists
+    plot_path = os.path.join(settings.MEDIA_ROOT, "advantage.png")
+    plt.savefig(plot_path)
+    plt.close()
+
+    # Build URL to serve the image
+    plot_url = settings.MEDIA_URL + "advantage.png"
+
+    # Render template that just shows the image
+    return render(request, "advantage_graph.html", {"plot_url": plot_url})
