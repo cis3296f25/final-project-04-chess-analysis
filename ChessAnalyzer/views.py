@@ -27,13 +27,6 @@ def analyze_game_stockfish(pgn_text):
     # parse pgn
     from io import StringIO
     pgn = StringIO(pgn_text)
-    game = chess.pgn.read_game(pgn)
-    
-    if not game:
-        print("ERROR: Could not parse PGN!")
-        return []
-    
-    print("PGN parsed successfully!")
     
     #initialize stockfish
     try:
@@ -41,33 +34,49 @@ def analyze_game_stockfish(pgn_text):
     except FileNotFoundError:
         print(f"ERROR: Stockfish not found at {stockfish_path}")
         return []
+    all_games = []
+    game_index =0
     
-    analysis = []
-    board = game.board()
-    move_count = 0
+    while True:
+        game = chess.pgn.read_game(pgn)
+        if not game:
+            break
+        game_index+=1
+        
+            
+        print(f"\nAnalyzing game #{game_index}..")
+        
+
+        analysis = []
+        board = game.board()
+        move_count = 0
     
-    for move in game.mainline_moves():
-        move_count += 1
-       #  print(f"Analyzing move {move_count}...")
-        
-        #Analyze position (0.1 seconds per move)
-        info = engine.analyse(board, chess.engine.Limit(time=0.1))
-        score = info['score'].relative.score(mate_score=10000)
-        
-        # Convert centipawns to pawns
-        evaluation = score / 100 if score else 0
-        
-        analysis.append({
-            'move': board.san(move),
-            'evaluation': evaluation
+        for move in game.mainline_moves():
+            move_count += 1
+        #  print(f"Analyzing move {move_count}...")
+            
+            #Analyze position (0.1 seconds per move)
+            info = engine.analyse(board, chess.engine.Limit(time=0.1))
+            score = info['score'].relative.score(mate_score=10000)
+            
+            # Convert centipawns to pawns
+            evaluation = score / 100 if score else 0
+            
+            analysis.append({
+                'move': board.san(move),
+                'evaluation': evaluation
+            })
+            
+            board.push(move)
+        all_games.append({
+            "game_number": game_index,
+            "moves":analysis
         })
-        
-        board.push(move)
     
     engine.quit()
     print(f"Analysis complete! Analyzed {len(analysis)} moves")
     
-    return analysis
+    return all_games
 
 
 def upload(request):
@@ -87,19 +96,24 @@ def upload(request):
         with open(file_path, 'r') as f:
             content = f.read()
             analysis = analyze_game_stockfish(content)
-        request.session["display"] = analysis
+        request.session["games"] = analysis
         analysis_print = analysis
 
-        # Print analysis to console
-        if analysis_print:
-            print("\n" + "=" * 50)
-            print("CHESS GAME ANALYSIS")
-            print("=" * 50)
-            for i, move_data in enumerate(analysis_print, 1):
-                print(f"Move {i}: {move_data['move']}")
-                print(f"  Evaluation: {move_data['evaluation']:.2f}")
-                print("-" * 50)
-            print("=" * 50 + "\n")
+        # Print analysis to console 
+        # if analysis_print:
+        #     print("\n" + "=" * 50)
+        #     print("MULTI-GAME CHESS ANALYSIS")
+        #     print("=" * 50)
+
+        #     for game in analysis_print:
+        #         print(f"\nGame #{game['game_number']}")
+        #         print("-" * 40)
+        #         for i, move_data in enumerate(game["moves"], 1):
+        #             print(f"Move {i}: {move_data['move']}")
+        #             print(f"  Evaluation: {move_data['evaluation']:.2f}")
+
+        #     print("=" * 50 + "\n")
+
 
         request.session.modified = True
         print("Analysis saved to session: ", request.session.get("display"))
@@ -107,28 +121,37 @@ def upload(request):
     return render(request, 'upload.html')
 
 def display(request):
-    # TODO: Implement more robust analysis view (especially for graphs)
-    analysis_result = request.session.get("display")
-    if analysis_result is None:
-        print("No analysis found in session. Redirecting to upload page.")
+    games = request.session.get("games")
+    if not games:
         return redirect("upload")
-    else:
-        print("Analysis found in session: ", analysis_result)
 
-    paginator = Paginator(analysis_result, 10)
-    page_number = request.GET.get('page', 1)
+    game_number = int(request.GET.get("game", 1))
+    if game_number < 1 or game_number > len(games):
+        game_number = 1
+
+    selected_game = games[game_number - 1]["moves"]
+
+    paginator = Paginator(selected_game, 10)
+    page_number = request.GET.get("page", 1)
     page_obj = paginator.get_page(page_number)
-    return render(request, "display.html", {"page_obj": page_obj})
+
+    return render(request, "display.html", {
+    "page_obj": page_obj,
+    "current_game": game_number,
+    "game_list": list(range(1, len(games) + 1))
+    })
+
+
 
 def advantage_graph(request):
-    # Get analysis from session (same data used in display())
-    analysis_result = request.session.get("display")
+    games = request.session.get("games")
+    game_number = int(request.GET.get("game", 1))
+    if not games:
+        return redirect("upload")
+    selected_game = games[game_number - 1]["moves"]
 
-    # X-axis: move numbers 1..N
-    moves = list(range(1, len(analysis_result) + 1))
-    # Y-axis: evaluation values in pawns
-    evaluations = [item["evaluation"] for item in analysis_result]
-
+    moves = list(range(1, len(selected_game) + 1))
+    evaluations = [item["evaluation"] for item in selected_game]
     # Create the plot
     plt.figure(figsize=(10, 4))
     plt.plot(moves, evaluations)
