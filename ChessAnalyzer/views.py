@@ -29,8 +29,6 @@ def analyze_game_stockfish(pgn_text):
     # parse pgn
     from io import StringIO
     pgn = StringIO(pgn_text)
-    
-    stockfish_path = r"C:\Users\thorp\stockfish\stockfish-windows-x86-64-avx2.exe"
 
     #initialize stockfish
     try:
@@ -60,8 +58,9 @@ def analyze_game_stockfish(pgn_text):
         #  print(f"Analyzing move {move_count}...")
             
             #Analyze position (0.1 seconds per move)
-            info = engine.analyse(board, chess.engine.Limit(time=0.1))
+            info = engine.analyse(board, chess.engine.Limit(time=0.01))
             score = info['score'].white().score(mate_score=10000)
+            engine.configure({"Threads": 4})
             
             # Convert centipawns to pawns
             evaluation = score / 100 if score else 0
