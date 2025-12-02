@@ -1,5 +1,6 @@
 from django.shortcuts import render
-from .chess_com_functions import lookup_elo, lookup_games
+from .chess_com_functions import lookup_elo, save_games
+from .lichess_functions import lookup_elo_lichess
 from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
 from django.core.files.storage import FileSystemStorage
@@ -117,18 +118,32 @@ def display(request):
     page_obj = paginator.get_page(page_number)
     return render(request, "display.html", {"page_obj": page_obj})
 
-# Create your views here.
-# def home(request):
-#     username = None # default username is None
-#     elos = None
-#     error = None
+def analyze_online(request):
+    """
+    Analyze a Chess.com username using lookup_elo.
+    """
+    context = {}
 
-#     if request.method == "POST":
-#         username = request.POST.get("username") # get username from form data
-#         elos, error = lookup_games(username)
+    if request.method == "POST":
+        action = request.POST.get("action")
 
-#     return render(request, 'home.html', {
-#         "username": username,
-#         "elos": elos,
-#         "error": error
-#         })
+        if action == "lookup":
+            username = request.POST.get("username")
+            platform = request.POST.get("platform") # Chess.com or Lichess
+            if username:
+                if platform == "Chess.com":
+                    stats, error = lookup_elo(username)
+                else:
+                    username = username.lower()
+                    stats, error = lookup_elo_lichess(username)
+                if error:
+                    context["error"] = error
+                else:
+                    context["stats"] = stats
+                    context["username"] = username
+                    context["platform"] = platform
+        elif action == "load_games":
+            save_games(username)
+
+
+    return render(request, "analyze_online.html", context)

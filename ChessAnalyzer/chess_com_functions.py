@@ -39,7 +39,7 @@ def lookup_elo(username):
 
     return stats, None
 
-def lookup_games(username):
+def save_games(username):
     if not username:
         return None, "No username provided."
     
@@ -77,11 +77,11 @@ def lookup_games(username):
             if pgn_response.status_code == 200:
                 with open(file_path, "w", encoding="utf-8") as f:
                     f.write(pgn_response.text)
-                print(f"✅ Saved: {file_path}")
+                print(f"Saved: {file_path}")
             else:
-                print(f"⚠️ Skipped {url} — status {pgn_response.status_code}")
-        except:
-            print()
+                print(f"Skipped {url} with status {pgn_response.status_code}")
+        except Exception as e:
+            print(f"Error proccessing {url}: {e}")
 
 
         
@@ -89,22 +89,3 @@ def lookup_games(username):
 
 
     return None, None
-
-# from django.shortcuts import render
-# from ...chess_com_functions import lookup_elo, lookup_games
-
-# # Create your views here.
-# def home(request):
-#     username = None # default username is None
-#     elos = None
-#     error = None
-
-#     if request.method == "POST":
-#         username = request.POST.get("username") # get username from form data
-#         elos, error = lookup_games(username)
-
-#     return render(request, 'home.html', {
-#         "username": username,
-#         "elos": elos,
-#         "error": error
-#         })

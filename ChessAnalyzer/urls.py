@@ -8,6 +8,7 @@ urlpatterns = [
     path('about/', views.about, name='about'),
     path('upload/', views.upload, name='upload'),
     path('display/', views.display, name='display'),
+    path('analyze-online/', views.analyze_online, name='analyze_online'),
 ]
 
 if settings.DEBUG:
