@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-(p6lj2c!n*c56hj1ewc!bk6gqprd=q$v5yb%l+96um7^+ofo1p
 DEBUG = True
 
 ALLOWED_HOSTS = ['localhost',
-                 '127.0.0.1']
+                 '127.0.0.1', '35.169.80.205', 'ec2-35-169-80-205.compute-1.amazonaws.com']
 
 
 # Application definition
@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'ChessAnalyzer',
+    'ChessAnalyzer', 'storages'
 ]
 
 MIDDLEWARE = [
@@ -126,3 +126,17 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+
+AWS_STORAGE_BUCKET_NAME = "chess-analyzers-groupproject"
+AWS_S3_REGION_NAME = "us-east-1" 
+AWS_S3_SIGNATURE_VERSION = "s3v4"
+
+AWS_DEFAULT_ACL = None
+AWS_S3_FILE_OVERWRITE = False
+AWS_QUERYSTRING_AUTH = True
+
+DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/"
+
