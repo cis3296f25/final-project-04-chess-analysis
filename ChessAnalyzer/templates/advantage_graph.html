@@ -1,0 +1,20 @@
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Advantage Graph</title>
+</head>
+<body>
+    <h1>Advantage Over Time</h1>
+
+    {% if plot_url %}
+        <img src="{{ plot_url }}" 
+             alt="Advantage graph" 
+             style="max-width: 100%; height: auto; border: 1px solid #333;">
+    {% else %}
+        <p>No graph available.</p>
+    {% endif %}
+
+    <p><a href="{% url 'display' %}">Back to move list</a></p>
+</body>
+</html>
