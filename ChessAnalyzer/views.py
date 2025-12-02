@@ -30,6 +30,8 @@ def analyze_game_stockfish(pgn_text):
     from io import StringIO
     pgn = StringIO(pgn_text)
     
+    stockfish_path = r"C:\Users\thorp\stockfish\stockfish-windows-x86-64-avx2.exe"
+
     #initialize stockfish
     try:
         engine = chess.engine.SimpleEngine.popen_uci(stockfish_path)
@@ -59,7 +61,7 @@ def analyze_game_stockfish(pgn_text):
             
             #Analyze position (0.1 seconds per move)
             info = engine.analyse(board, chess.engine.Limit(time=0.1))
-            score = info['score'].relative.score(mate_score=10000)
+            score = info['score'].white().score(mate_score=10000)
             
             # Convert centipawns to pawns
             evaluation = score / 100 if score else 0
@@ -150,10 +152,9 @@ def analyze_online(request):
 
     if request.method == "POST":
         action = request.POST.get("action")
-
+        username = request.POST.get("username")
+        platform = request.POST.get("platform") # Chess.com or Lichess
         if action == "lookup":
-            username = request.POST.get("username")
-            platform = request.POST.get("platform") # Chess.com or Lichess
             if username:
                 if platform == "Chess.com":
                     stats, error = lookup_elo(username)
@@ -167,7 +168,15 @@ def analyze_online(request):
                     context["username"] = username
                     context["platform"] = platform
         elif action == "load_games":
-            save_games(username)
+            n = int(request.POST.get("count", 10))
+            if username:
+                if platform == "Chess.com":
+                    print("TODO")
+                else:
+                    username = username.lower()
+                    stats, error = lookup_elo_lichess(username)
+
+            
 
 
     return render(request, "analyze_online.html", context)
@@ -184,8 +193,9 @@ def advantage_graph(request):
     moves = list(range(1, len(selected_game) + 1))
     evaluations = [item["evaluation"] for item in selected_game]
     # Create the plot
-    plt.figure(figsize=(10, 4))
+    plt.figure(figsize=(17, 4))
     plt.plot(moves, evaluations)
+    plt.ylim(-105, 105)
     plt.axhline(0, linestyle='--', linewidth=1)  # zero line at 0
     plt.xlabel("Move number")
     plt.ylabel("Evaluation (pawns, + = White, - = Black)")

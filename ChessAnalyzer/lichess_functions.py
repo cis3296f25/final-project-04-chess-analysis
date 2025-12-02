@@ -29,3 +29,22 @@ def lookup_elo_lichess(username):
     }
 
     return stats, None
+
+def fetch_games(username, n):
+    if not username:
+        return None
+    
+    headers = {
+    "User-Agent": "MyChessApp/1.0"
+    }
+
+    url = f"https://lichess.org/api/games/user/{username}?max={n}"
+
+    response = requests.get(url)
+    pgn_text = response.text
+
+    with open(f"{username}_last_{n}_games.pgn", "w", encoding="utf-8") as f:
+        f.write(pgn_text)
+
+    response = requests.get(url, headers=headers)
+    return None
