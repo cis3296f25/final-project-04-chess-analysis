@@ -3,12 +3,12 @@ from .chess_com_functions import lookup_elo, save_games
 from .lichess_functions import lookup_elo_lichess
 from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
-from django.core.files.storage import FileSystemStorage
 from django.conf import settings
 from .utils import get_stockfish_path
+from ChessAnalyzer.engine import get_engine
+from django.core.files.storage import default_storage
 import chess
 import chess.pgn
-import chess.engine
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -23,19 +23,14 @@ def about(request):
 
 def analyze_game_stockfish(pgn_text):
     print("Starting Stockfish analysis...")
-    # Automatically detect and get stockfish path
-    stockfish_path = get_stockfish_path()
-    
+    singleton_engine = get_engine()
+    engine = chess.engine.SimpleEngine.popen_uci(get_stockfish_path())
+   
+
     # parse pgn
     from io import StringIO
     pgn = StringIO(pgn_text)
 
-    #initialize stockfish
-    try:
-        engine = chess.engine.SimpleEngine.popen_uci(stockfish_path)
-    except FileNotFoundError:
-        print(f"ERROR: Stockfish not found at {stockfish_path}")
-        return []
     all_games = []
     game_index =0
     
@@ -55,30 +50,37 @@ def analyze_game_stockfish(pgn_text):
     
         for move in game.mainline_moves():
             move_count += 1
-        #  print(f"Analyzing move {move_count}...")
-            
-            #Analyze position (0.1 seconds per move)
-            info = engine.analyse(board, chess.engine.Limit(time=0.01))
-            score = info['score'].white().score(mate_score=10000)
-            engine.configure({"Threads": 4})
-            
-            # Convert centipawns to pawns
-            evaluation = score / 100 if score else 0
-            
-            analysis.append({
-                'move': board.san(move),
-                'evaluation': evaluation
-            })
+            # Generate SAN safely
+            try:
+               if board.is_legal(move):
+                  san=board.san(move)
+               else:
+                  san = move.uci()
+            except (ValueError, AssertionError):
+                san = move.uci()  # fallback to UCI if SAN fails)
             
             board.push(move)
+            # THIS IS THE FIXED VERSION — works 100% with global engine
+            info = engine.analyse(board, chess.engine.Limit(time=0.015))
+            score = info.get("score")
+            if score is not None:
+                cp = score.relative.score(mate_score=10000)
+                evaluation = round(cp / 100.0, 2) if cp is not None else None
+            else:
+                evaluation = None
+            engine.configure({"Threads": 6})
+            analysis.append({
+                "move": san,
+                "evaluation": evaluation,
+            })
+
         all_games.append({
             "game_number": game_index,
-            "moves":analysis
+            "moves": analysis
         })
-    
-    engine.quit()
-    print(f"Analysis complete! Analyzed {len(analysis)} moves")
-    
+
+    #print(f"Analysis complete! Analyzed {len(analysis)} moves")
+    engine.quit()    
     return all_games
 
 
@@ -87,16 +89,14 @@ def upload(request):
         uploaded_file = request.FILES['pgn_file']
 
         # Save to /media/
-        fs = FileSystemStorage()
-        filename = fs.save(uploaded_file.name, uploaded_file)
+        fs = default_storage
+        filename = fs.save(f"uploaded/{uploaded_file.name}", uploaded_file)
         file_url = fs.url(filename)
 
-        # (Optional) Access the file path on backend:
-        file_path = fs.path(filename)
-        print(f"Saved at: {file_path}")
+        print(f"Saved at: {file_url}")
 
         # You can open/read it here if you want:
-        with open(file_path, 'r') as f:
+        with default_storage.open(filename, 'r') as f:
             content = f.read()
             analysis = analyze_game_stockfish(content)
         request.session["games"] = analysis

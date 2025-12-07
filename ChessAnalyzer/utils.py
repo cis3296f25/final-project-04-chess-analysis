@@ -43,6 +43,7 @@ def get_stockfish_path():
     else:  # Linux
         possible_paths += [
             "/usr/bin/stockfish",
+	    "/home/ec2-user/final-project-04-chess-analysis/stockfish",
             "/usr/local/bin/stockfish",
             os.path.expanduser("~/stockfish/stockfish"),
         ]
