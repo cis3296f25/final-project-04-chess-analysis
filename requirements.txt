@@ -12,3 +12,4 @@ stockfish==3.28.0
 tzdata==2025.2
 urllib3==2.5.0
 matplotlib==3.10.7
+reportlab==4.4.5
