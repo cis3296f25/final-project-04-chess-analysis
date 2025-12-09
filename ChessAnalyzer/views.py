@@ -13,6 +13,12 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import os
+import io
+from django.http import HttpResponse
+import csv
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.utils import ImageReader
 
 def home(request):
     # TODO: Move logic to upload.html view
@@ -73,8 +79,11 @@ def analyze_game_stockfish(pgn_text):
             board.push(move)
         all_games.append({
             "game_number": game_index,
-            "moves":analysis
+            "moves": analysis
         })
+        if analysis:
+            last = analysis[-1]
+            print("DEBUG:", game_index, move_count, last["move"], last["evaluation"])
     
     engine.quit()
     print(f"Analysis complete! Analyzed {len(analysis)} moves")
@@ -177,7 +186,6 @@ def analyze_online(request):
 
             
 
-
     return render(request, "analyze_online.html", context)
 
 
@@ -190,11 +198,27 @@ def advantage_graph(request):
     selected_game = games[game_number - 1]["moves"]
 
     moves = list(range(1, len(selected_game) + 1))
-    evaluations = [item["evaluation"] for item in selected_game]
+    evaluations = [float(item["evaluation"]) for item in selected_game]
+
+    # Compute dynamic y-limits so the graph isn’t visually “flat”
+    if evaluations:
+        e_min = min(evaluations)
+        e_max = max(evaluations)
+        if e_min == e_max:
+            # All evaluations equal – give a small band around the value
+            e_min -= 1.0
+            e_max += 1.0
+        padding = max(0.5, (e_max - e_min) * 0.1)
+        y_lower = e_min - padding
+        y_upper = e_max + padding
+    else:
+        # Fallback range
+        y_lower, y_upper = -2.0, 2.0
+
     # Create the plot
     plt.figure(figsize=(17, 4))
     plt.plot(moves, evaluations)
-    plt.ylim(-105, 105)
+    plt.ylim(y_lower, y_upper)
     plt.axhline(0, linestyle='--', linewidth=1)  # zero line at 0
     plt.xlabel("Move number")
     plt.ylabel("Evaluation (pawns, + = White, - = Black)")
@@ -212,3 +236,127 @@ def advantage_graph(request):
 
     # Render template that just shows the image
     return render(request, "advantage_graph.html", {"plot_url": plot_url})
+
+
+def download_games_pdf(request):
+    games = request.session.get("games")
+    if not games:
+        return redirect("upload")
+
+    if request.method != "POST":
+        return redirect("display")
+
+    # Get selected game numbers from the form
+    selected = request.POST.getlist("selected_games")
+
+    if not selected:
+        # If nothing selected, default to all games
+        selected_indices = list(range(1, len(games) + 1))
+    else:
+        selected_indices = []
+        for s in selected:
+            try:
+                n = int(s)
+                if 1 <= n <= len(games):
+                    selected_indices.append(n)
+            except ValueError:
+                continue
+
+    # Build PDF response
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = 'attachment; filename="chess_analysis.pdf"'
+
+    pdf = canvas.Canvas(response, pagesize=letter)
+    width, height = letter
+    margin_left = 50
+    margin_top = height - 50
+    margin_bottom = 50
+
+    def new_page_reset(font_size=10):
+        pdf.showPage()
+        pdf.setFont("Helvetica", font_size)
+        return height - 50
+
+    y = margin_top
+
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawString(margin_left, y, "Chess Game Analysis")
+    y -= 30
+    pdf.setFont("Helvetica", 10)
+
+    for game_number in selected_indices:
+        game_moves = games[game_number - 1]["moves"]
+
+        # If not enough space for a new game header + graph, start a new page
+        if y < 300:
+            y = new_page_reset(font_size=10)
+
+        # Game header
+        pdf.setFont("Helvetica-Bold", 12)
+        pdf.drawString(margin_left, y, f"Game {game_number}")
+        y -= 20
+        pdf.setFont("Helvetica", 9)
+
+        # Generate advantage graph for this game in-memory
+        moves = list(range(1, len(game_moves) + 1))
+        evaluations = [float(item["evaluation"]) for item in game_moves]
+
+        # Dynamic y-axis based on this game’s evals
+        if evaluations:
+            e_min = min(evaluations)
+            e_max = max(evaluations)
+            if e_min == e_max:
+                e_min -= 1.0
+                e_max += 1.0
+            padding = max(0.5, (e_max - e_min) * 0.1)
+            y_lower = e_min - padding
+            y_upper = e_max + padding
+        else:
+            y_lower, y_upper = -2.0, 2.0
+
+        plt.figure(figsize=(17, 4))
+        plt.plot(moves, evaluations)
+        plt.ylim(y_lower, y_upper)
+        plt.axhline(0, linestyle='--', linewidth=1)
+        plt.xlabel("Move number")
+        plt.ylabel("Evaluation (pawns, + = White, - = Black)")
+        plt.title(f"Advantage Over Time - Game {game_number}")
+        plt.tight_layout()
+
+        img_buffer = io.BytesIO()
+        plt.savefig(img_buffer, format="PNG")
+        plt.close()
+        img_buffer.seek(0)
+
+        img = ImageReader(img_buffer)
+        img_width = width - 2 * margin_left
+        img_height = 200  # fixed height for the graph
+
+        # Check if there is enough space for the image, otherwise new page
+        if y - img_height < margin_bottom:
+            y = new_page_reset(font_size=9)
+
+        pdf.drawImage(
+            img,
+            margin_left,
+            y - img_height,
+            width=img_width,
+            height=img_height,
+            preserveAspectRatio=True,
+            mask='auto'
+        )
+        y -= img_height + 20  # space after image
+
+        # Now print the moves and evaluations
+        for move_index, move_data in enumerate(game_moves, start=1):
+            line = f"{move_index}. {move_data['move']}  Eval: {move_data['evaluation']:.2f}"
+            if y < margin_bottom:
+                y = new_page_reset(font_size=9)
+            pdf.drawString(margin_left + 10, y, line)
+            y -= 12
+
+        # Extra spacing between games
+        y -= 10
+
+    pdf.save()
+    return response
