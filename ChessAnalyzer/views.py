@@ -10,6 +10,7 @@ from django.core.files.storage import default_storage
 import chess
 import chess.pgn
 import matplotlib
+from django.core.files.storage import FileSystemStorage
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import os
@@ -191,18 +192,26 @@ def analyze_online(request):
                     request.session["games"] = analysis
                     request.session.modified = True
 
-                    # Pass game list to HTML
-                    context["game_list"] = list(range(1, len(analysis) + 1))
-                    context["current_game"] = 1
-                    context["moves"] = analysis[0]["moves"]
     games = request.session.get("games")
+
     if games:
-        context["game_list"] = list(range(1, len(games) + 1))
 
         game_number = int(request.GET.get("game", 1))
-        game_number = max(1, min(game_number, len(games)))
-        context["current_game"] = game_number
-        context["moves"] = games[game_number - 1]["moves"]
+        if game_number < 1 or game_number > len(games):
+            game_number = 1
+
+        selected_game = games[game_number - 1]["moves"]
+
+        paginator = Paginator(selected_game, 10)
+        page_number = request.GET.get("page", 1)
+        page_obj = paginator.get_page(page_number)
+
+        # Update context with pages
+        context.update({
+            "page_obj": page_obj,
+            "current_game": game_number,
+            "game_list": list(range(1, len(games) + 1))
+        })
 
     return render(request, "analyze_online.html", context)
 
