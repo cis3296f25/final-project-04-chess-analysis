@@ -1,21 +1,21 @@
-from django.shortcuts import render
-from .chess_com_functions import lookup_elo
-from .lichess_functions import lookup_elo_lichess, fetch_games
+import chess
+import chess.engine
+import chess.pgn
+import matplotlib
+from django.conf import settings
+from django.core.files.storage import FileSystemStorage
 from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
-from django.core.files.storage import FileSystemStorage
-from django.conf import settings
+
+from .chess_com_functions import lookup_elo
+from .lichess_functions import lookup_elo_lichess, fetch_games
 from .utils import get_stockfish_path
-import chess
-import chess.pgn
-import chess.engine
-import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import os
 import io
 from django.http import HttpResponse
-import csv
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.utils import ImageReader
@@ -176,19 +176,27 @@ def analyze_online(request):
                     request.session["games"] = analysis
                     request.session.modified = True
 
-                    # Pass game list to HTML
-                    context["game_list"] = list(range(1, len(analysis) + 1))
-                    context["current_game"] = 1
-                    context["moves"] = analysis[0]["moves"]
+    # Use Pagination to split up the moves into manageable pages
     games = request.session.get("games")
+
+    # Process the data into pages
     if games:
-        context["game_list"] = list(range(1, len(games) + 1))
-
         game_number = int(request.GET.get("game", 1))
-        game_number = max(1, min(game_number, len(games)))
+        if game_number < 1 or game_number > len(games):
+            game_number = 1
 
-        context["current_game"] = game_number
-        context["moves"] = games[game_number - 1]["moves"]
+        selected_game = games[game_number - 1]["moves"]
+
+        paginator = Paginator(selected_game, 10)
+        page_number = request.GET.get("page", 1)
+        page_obj = paginator.get_page(page_number)
+
+        # Update context with pages
+        context.update({
+            "page_obj": page_obj,
+            "current_game": game_number,
+            "game_list": list(range(1, len(games) + 1))
+        })
 
     return render(request, "analyze_online.html", context)
 
