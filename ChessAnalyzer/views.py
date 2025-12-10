@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from .chess_com_functions import lookup_elo, save_games
-from .lichess_functions import lookup_elo_lichess
+from .lichess_functions import lookup_elo_lichess, fetch_games
 from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
 from django.conf import settings
@@ -180,10 +180,29 @@ def analyze_online(request):
                     print("TODO")
                 else:
                     username = username.lower()
-                    stats, error = lookup_elo_lichess(username)
+                    pgn_text, error = fetch_games(username, n)
+                if error:
+                    context["error"] = error
+                else:
+                    analysis = analyze_game_stockfish(pgn_text)
 
             
+                    # store games in session
+                    request.session["games"] = analysis
+                    request.session.modified = True
 
+                    # Pass game list to HTML
+                    context["game_list"] = list(range(1, len(analysis) + 1))
+                    context["current_game"] = 1
+                    context["moves"] = analysis[0]["moves"]
+    games = request.session.get("games")
+    if games:
+        context["game_list"] = list(range(1, len(games) + 1))
+
+        game_number = int(request.GET.get("game", 1))
+        game_number = max(1, min(game_number, len(games)))
+        context["current_game"] = game_number
+        context["moves"] = games[game_number - 1]["moves"]
 
     return render(request, "analyze_online.html", context)
 
