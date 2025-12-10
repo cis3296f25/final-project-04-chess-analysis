@@ -11,6 +11,7 @@ urlpatterns = [
     path('display/', views.display, name='display'),
     path('graph/', views.advantage_graph, name='advantage_graph'),
     path('analyze-online/', views.analyze_online, name='analyze_online'),
+    path("download-games-pdf/", views.download_games_pdf, name="download_games_pdf"),
 ]
 
 if settings.DEBUG:

@@ -26,6 +26,31 @@
         {% endfor %}
     </div>
 
+    <!-- Download selected games as PDF -->
+    <form method="post" action="{% url 'download_games_pdf' %}" class="mb-4">
+        {% csrf_token %}
+        <h3>Select games to include in PDF:</h3>
+        <div class="form-group mb-2">
+            {% for g in game_list %}
+                <div class="form-check form-check-inline">
+                    <input
+                        class="form-check-input"
+                        type="checkbox"
+                        name="selected_games"
+                        id="gameCheck{{ g }}"
+                        value="{{ g }}"
+                        {% if g == current_game %}checked{% endif %}
+                    >
+                    <label class="form-check-label" for="gameCheck{{ g }}">
+                        Game {{ g }}
+                    </label>
+                </div>
+            {% endfor %}
+        </div>
+        <button type="submit" class="btn btn-secondary">
+            Download selected games as PDF
+        </button>
+    </form>
 
     <h2>Analysis Result (Game {{ current_game }}):</h2>
 
@@ -59,13 +84,13 @@
             <!-- Pagination controls -->
             <div class="mb-3">
                 {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                <a href="?game={{ current_game }}&page={{ page_obj.previous_page_number }}">Previous</a>
                 {% endif %}
                 <span class="current">
                     Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
                 </span>
                 {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}">Next</a>
+                <a href="?game={{ current_game }}&page={{ page_obj.next_page_number }}">Next</a>
                 {% endif %}
             </div>
         {% else %}
