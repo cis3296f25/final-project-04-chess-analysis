@@ -21,7 +21,6 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.utils import ImageReader
 
 def home(request):
-    # TODO: Move logic to upload.html view
     return render(request, 'home.html')
 
 def about(request):
@@ -36,7 +35,7 @@ def analyze_game_stockfish(pgn_text):
     from io import StringIO
     pgn = StringIO(pgn_text)
 
-    #initialize stockfish
+    # initialize stockfish
     try:
         engine = chess.engine.SimpleEngine.popen_uci(stockfish_path)
     except FileNotFoundError:
@@ -61,9 +60,9 @@ def analyze_game_stockfish(pgn_text):
     
         for move in game.mainline_moves():
             move_count += 1
-        #  print(f"Analyzing move {move_count}...")
+
             
-            #Analyze position (0.1 seconds per move)
+            # Analyze position (0.1 seconds per move)
             info = engine.analyse(board, chess.engine.Limit(time=0.01))
             score = info['score'].white().score(mate_score=10000)
             engine.configure({"Threads": 4})
@@ -110,22 +109,6 @@ def upload(request):
             analysis = analyze_game_stockfish(content)
         request.session["games"] = analysis
         analysis_print = analysis
-
-        # Print analysis to console 
-        # if analysis_print:
-        #     print("\n" + "=" * 50)
-        #     print("MULTI-GAME CHESS ANALYSIS")
-        #     print("=" * 50)
-
-        #     for game in analysis_print:
-        #         print(f"\nGame #{game['game_number']}")
-        #         print("-" * 40)
-        #         for i, move_data in enumerate(game["moves"], 1):
-        #             print(f"Move {i}: {move_data['move']}")
-        #             print(f"  Evaluation: {move_data['evaluation']:.2f}")
-
-        #     print("=" * 50 + "\n")
-
 
         request.session.modified = True
         print("Analysis saved to session: ", request.session.get("display"))
