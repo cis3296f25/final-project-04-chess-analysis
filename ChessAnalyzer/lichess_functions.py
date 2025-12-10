@@ -1,4 +1,5 @@
 import requests, time, os
+# from .views import analyze_game_stockfish
 
 # returns two things (stats, error)
 def lookup_elo_lichess(username):
@@ -40,11 +41,12 @@ def fetch_games(username, n):
 
     url = f"https://lichess.org/api/games/user/{username}?max={n}"
 
-    response = requests.get(url)
-    pgn_text = response.text
-
-    with open(f"{username}_last_{n}_games.pgn", "w", encoding="utf-8") as f:
-        f.write(pgn_text)
-
     response = requests.get(url, headers=headers)
-    return None
+    pgn_text = response.text
+    
+    print(pgn_text)
+
+    # with open(f"{username}_last_{n}_games.pgn", "w", encoding="utf-8") as f:
+    #     f.write(pgn_text)
+
+    return pgn_text, None
